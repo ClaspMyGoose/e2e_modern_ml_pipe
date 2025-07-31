@@ -1,6 +1,3 @@
-
-
-
 import requests 
 import os
 # import json 
@@ -9,14 +6,18 @@ from datetime import date, timedelta
 from dotenv import load_dotenv 
 import pandas as pd 
 
-loadENV = load_dotenv()
-
-if not loadENV:
-    print('Could not load ENV file. Exiting...')
-    sys.exit() 
-
+# loadENV = load_dotenv()
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 
+if not WEATHER_API_KEY:
+    print('Could not load ENV file. Exiting...')
+    sys.exit(1) 
+
+
+
+
+# ! because of python versioning in docker container, we 
+# ! to use f' {""} ' pattern within f strings. 
 
 
 today = date.today()
@@ -94,11 +95,11 @@ dataframeObj = {
 for city in us_cities:
     
     try:
-        weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city['lat']},{city['lon']}&dt={today_minus_30}&end_dt={today_minus_1}'
+        weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city["lat"]},{city["lon"]}&dt={today_minus_30}&end_dt={today_minus_1}'
         response = requests.get(weather_url)
         json = response.text
 
-        with open(f'./data/{today}_{city['name']}.json', 'w') as f:
+        with open(f'/opt/airflow/data/{today}_{city["name"]}.json', 'w') as f:
             f.write(json)
 
             
@@ -106,77 +107,4 @@ for city in us_cities:
     except Exception as e: 
         print('Error with fetching data, please try again')
         print(e)
-    
-    
-#     data = response.json()
-#     locationsObject = data['location']
-#     forecastObject = data['forecast']
-#     forecastDayObject = forecastObject['forecastday']
-
-
-#     print('Parsing data for: ', locationsObject['name'])
-
-#     for day_history in forecastDayObject:    
-#         dataframeObj['city_name'].append(locationsObject['name'])
-#         dataframeObj['lat'].append(locationsObject['lat'])
-#         dataframeObj['lon'].append(locationsObject['lon'])
-#         dataframeObj['date_str'].append(day_history['date'])
-#         dataframeObj['maxtemp_f'].append(day_history['day']['maxtemp_f'])
-#         dataframeObj['mintemp_f'].append(day_history['day']['mintemp_f'])
-#         dataframeObj['maxwind_mph'].append(day_history['day']['maxwind_mph'])
-#         dataframeObj['totalprecip_in'].append(day_history['day']['totalprecip_in'])
-#         dataframeObj['avghumidity'].append(day_history['day']['avghumidity'])
-
-
-
-# df = pd.DataFrame(dataframeObj, dtype=str)
-# numeric_cols = ['lat', 'lon', 'maxtemp_f', 'mintemp_f', 'maxwind_mph', 'totalprecip_in', 'avghumidity']
-# df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric)
-# df['date'] = pd.to_datetime(df['date_str'])
-# df.drop('date_str', axis=1, inplace=True) 
-
-# print(df.dtypes)
-# print(df.head())
-
-
-
-
-#     print(item['day']['maxtemp_f'])
-#     print(item['day']['mintemp_f'])
-#     print(item['day']['maxwind_mph'])
-#     print(item['day']['totalprecip_in'])
-#     print(item['day']['avghumidity'])
-
-
-
-# weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={test_city}&dt={today_minus_30}&end_dt={today_minus_1}'
-
-# response = requests.get(weather_url)
-
-# data = response.json()
-
-
-# # data is made up of: 
-
-# # location dict 
-# # forecast dict 
-
-
-# locationsObject = data['location']
-
-# forecastObject = data['forecast']
-
-# forecastDayObject = forecastObject['forecastday']
-
-# for item in forecastDayObject:
-#     print(item['date'])
-#     print(item['day']['maxtemp_f'])
-#     print(item['day']['mintemp_f'])
-#     print(item['day']['maxwind_mph'])
-#     print(item['day']['totalprecip_in'])
-#     print(item['day']['avghumidity'])
-
-    
-
-    
-
+        sys.exit(1)
