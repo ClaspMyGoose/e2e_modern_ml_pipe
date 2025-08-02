@@ -116,7 +116,13 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
-    command: webserver
+    user: "0:0"  # root user
+    command: |
+      bash -c "
+        apt-get update && 
+        apt-get install -y openjdk-11-jdk && 
+        su airflow -c 'airflow webserver'
+      "
     ports:
       - "8080:8080"
     healthcheck:
@@ -133,7 +139,13 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
-    command: scheduler
+    user: "0:0"  # root user
+    command: |
+      bash -c "
+        apt-get update && 
+        apt-get install -y openjdk-11-jdk && 
+        su airflow -c 'airflow scheduler'
+      "
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
       interval: 30s
@@ -148,7 +160,13 @@ services:
 
   airflow-worker:
     <<: *airflow-common
-    command: celery worker
+    user: "0:0"  # root user
+    command: |
+      bash -c "
+        apt-get update && 
+        apt-get install -y openjdk-11-jdk && 
+        su airflow -c 'celery worker'
+      "
     healthcheck:
       # yamllint disable rule:line-length
       test:
@@ -171,7 +189,13 @@ services:
 
   airflow-triggerer:
     <<: *airflow-common
-    command: triggerer
+    user: "0:0"  # root user
+    command: |
+      bash -c "
+        apt-get update && 
+        apt-get install -y openjdk-11-jdk && 
+        su airflow -c 'airflow triggerer'
+      "
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
       interval: 30s

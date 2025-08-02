@@ -91,23 +91,28 @@ dataframeObj = {
 }
 
 
-for city in us_cities:
+# for city in us_cities:
     
-    try:
-        weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city['lat']},{city['lon']}&dt={today_minus_30}&end_dt={today_minus_1}'
-        response = requests.get(weather_url)
-        json = response.text
+#     try:
+#         weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city['lat']},{city['lon']}&dt={today_minus_30}&end_dt={today_minus_1}'
+#         response = requests.get(weather_url)
+#         json = response.text
 
-        with open(f'./data/{today}_{city['name']}.json', 'w') as f:
-            f.write(json)
+#         with open(f'./data/{today}_{city['name']}.json', 'w') as f:
+#             f.write(json)
 
             
 
-    except Exception as e: 
-        print('Error with fetching data, please try again')
-        print(e)
+#     except Exception as e: 
+#         print('Error with fetching data, please try again')
+#         print(e)
     
-    
+
+
+
+
+
+
 #     data = response.json()
 #     locationsObject = data['location']
 #     forecastObject = data['forecast']

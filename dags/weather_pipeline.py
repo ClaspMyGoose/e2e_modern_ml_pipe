@@ -29,3 +29,11 @@ extract_weather = BashOperator(
     dag=dag 
 )
 
+process_weather = BashOperator(
+    task_id='process_weather_data',
+    bash_command='python /opt/airflow/scripts/spark_weather_processing.py',
+    dag=dag
+)
+
+extract_weather >> process_weather
+
