@@ -3,9 +3,9 @@ import os
 # import json 
 import sys
 from datetime import date, timedelta
-from dotenv import load_dotenv 
 import pandas as pd 
 
+# no need for this, runs in a container 
 # loadENV = load_dotenv()
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 

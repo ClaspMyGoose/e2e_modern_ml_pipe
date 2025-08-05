@@ -12,11 +12,10 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 
-local_read_path = '../data/*.json'
-local_write_path = '../processed_data/weather_output'
-
-docker_read_path = '/opt/airflow/data/*.json'
-docker_write_path = '/opt/airflow/processed_data/weather_output'
+# ! because we're running this script in a separate spark container, I have mounts specified in the DAG that map our host input and output folders 
+# ! to the respective input and output folders in the spark container. Here we use the spark containers path 
+docker_read_path = '/app/data/*.json'
+docker_write_path = '/app/processed_data/weather_output'
 
 
 df = spark.read.json(docker_read_path)

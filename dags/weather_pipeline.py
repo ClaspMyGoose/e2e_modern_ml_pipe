@@ -1,7 +1,13 @@
 from datetime import datetime, timedelta 
-
+import os 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
+from airflow.providers.docker.operators.docker import DockerOperator
+from docker.types import Mount
+
+
+extract_mount_path = os.getenv('EXTRACT_MOUNT_PATH')
+process_mount_path = os.getenv('PROCESS_MOUNT_PATH')
 
 
 default_args = {
@@ -29,9 +35,14 @@ extract_weather = BashOperator(
     dag=dag 
 )
 
-process_weather = BashOperator(
+process_weather = DockerOperator(
     task_id='process_weather_data',
-    bash_command='python /opt/airflow/scripts/spark_weather_processing.py',
+    image='spark_python_image',
+    mount_tmp_dir=False,
+    mounts=[
+        Mount(source=extract_mount_path, target='/app/data', type='bind'),
+        Mount(source=process_mount_path, target='/app/processed_data/', type='bind')
+    ],
     dag=dag
 )
 

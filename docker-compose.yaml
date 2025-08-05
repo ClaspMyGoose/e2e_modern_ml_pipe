@@ -62,6 +62,8 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     WEATHER_API_KEY: ${WEATHER_API_KEY}
+    EXTRACT_MOUNT_PATH: ${EXTRACT_MOUNT_PATH}
+    PROCESS_MOUNT_PATH: ${PROCESS_MOUNT_PATH}
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
@@ -78,6 +80,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -116,13 +119,7 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
-    user: "0:0"  # root user
-    command: |
-      bash -c "
-        apt-get update && 
-        apt-get install -y openjdk-11-jdk && 
-        su airflow -c 'airflow webserver'
-      "
+    command: webserver
     ports:
       - "8080:8080"
     healthcheck:
@@ -139,13 +136,7 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
-    user: "0:0"  # root user
-    command: |
-      bash -c "
-        apt-get update && 
-        apt-get install -y openjdk-11-jdk && 
-        su airflow -c 'airflow scheduler'
-      "
+    command: scheduler
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
       interval: 30s
@@ -160,13 +151,7 @@ services:
 
   airflow-worker:
     <<: *airflow-common
-    user: "0:0"  # root user
-    command: |
-      bash -c "
-        apt-get update && 
-        apt-get install -y openjdk-11-jdk && 
-        su airflow -c 'celery worker'
-      "
+    command: celery worker
     healthcheck:
       # yamllint disable rule:line-length
       test:
@@ -189,13 +174,7 @@ services:
 
   airflow-triggerer:
     <<: *airflow-common
-    user: "0:0"  # root user
-    command: |
-      bash -c "
-        apt-get update && 
-        apt-get install -y openjdk-11-jdk && 
-        su airflow -c 'airflow triggerer'
-      "
+    command: triggerer
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
       interval: 30s
