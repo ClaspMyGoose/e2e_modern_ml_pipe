@@ -79,17 +79,18 @@ us_cities = [
 ]
 
 # for pandas prototyping 
-dataframeObj = {
-    'city_name': [],
-    'lat': [],
-    'lon': [],
-    'date_str': [], 
-    'maxtemp_f': [],
-    'mintemp_f': [],
-    'maxwind_mph': [],
-    'totalprecip_in': [],
-    'avghumidity': []
-}
+# dataframeObj = {
+#     'city_name': [],
+#     'region': [],
+#     'lat': [],
+#     'lon': [],
+#     'date_str': [], 
+#     'maxtemp_f': [],
+#     'mintemp_f': [],
+#     'maxwind_mph': [],
+#     'totalprecip_in': [],
+#     'avghumidity': []
+# }
 
 
 for city in us_cities:
@@ -99,7 +100,7 @@ for city in us_cities:
         response = requests.get(weather_url)
         json = response.text
 
-        with open(f'/opt/airflow/data/{today}_{city["name"]}.json', 'w') as f:
+        with open(f'/opt/airflow/data/json/{today}_{city["name"]}.json', 'w') as f:
             f.write(json)
 
             

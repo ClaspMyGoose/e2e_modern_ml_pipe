@@ -5,7 +5,7 @@ import os
 # os.environ['JAVA_HOME'] = '/opt/homebrew/opt/openjdk@11'
 os.environ['PYSPARK_PYTHON'] = 'python'
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import explode, col, arrays_zip
+from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr
 
 spark = SparkSession.builder \
     .appName("Weather Data Processing") \
@@ -14,15 +14,19 @@ spark = SparkSession.builder \
 
 # ! because we're running this script in a separate spark container, I have mounts specified in the DAG that map our host input and output folders 
 # ! to the respective input and output folders in the spark container. Here we use the spark containers path 
-docker_read_path = '/app/data/*.json'
+docker_json_read_path = '/app/data/json/*.json'
+docker_csv_read_path = 'app/data/csv/*.csv'
 docker_write_path = '/app/processed_data/weather_output'
 
 
-df = spark.read.json(docker_read_path)
 
 
-df_explode = df.select(
-            'location.name', 
+dirty_weather_df = spark.read.json(docker_json_read_path)
+
+
+weather_df = dirty_weather_df.select(
+            'location.name',
+            col('location.region').alias('state'), 
             'location.lat', 
             'location.lon',
             explode(arrays_zip(
@@ -35,6 +39,7 @@ df_explode = df.select(
             )).alias('daily_data') 
 ).select(
     'name',
+    'state',
     'lat',
     'lon',
     col('daily_data.date').alias('date'),
@@ -45,11 +50,71 @@ df_explode = df.select(
     col('daily_data.avghumidity').alias('avghumidity')
 )
 
+dirty_city_pop_df = spark.read.csv(docker_csv_read_path, header=False)
+
+intermediate_city_pop_df = dirty_city_pop_df.select(
+    '_c1', # combined city and state 
+    '_c2' # population 
+).withColumn(
+    'city_dirty',
+    split(col('_c1'), ',')[0]
+).withColumn(
+    'state_dirty',
+    split(col('_c1'), ',')[1]
+).withColumn(
+    'city',
+    expr("substr(city_dirty, 1, length(city_dirty) - 5)")
+    # regexp_replace(col('city_dirty'), '.{5}$', '')
+).withColumn(
+    'geo_state',
+    trim(col('state_dirty'))
+).withColumn(
+    'population',
+    regexp_replace(col('_c2'), ',', '').cast('integer')
+)
+
+# TODO trim state 
+
+city_pop_df = intermediate_city_pop_df.select(
+    col('city'),
+    col('geo_state'),
+    col('population')
+)
+
+
+joined_df = weather_df.repartition('state').join(
+    city_pop_df.repartition('geo_state'), 
+    [weather_df.name == city_pop_df.city, weather_df.state == city_pop_df.geo_state],
+    'inner'
+).select(
+    'name',
+    'state',
+    'lat',
+    'lon',
+    'date',
+    'maxtemp_f',
+    'mintemp_f',
+    'maxwind_mph',
+    'totalprecip_in',
+    'avghumidity',
+    'population'
+)
+
+
+
+# joined_df.printSchema()
+# joined_df.show(5, truncate=False)
+
+
+
 
 # df_explode.printSchema()  # See the structure
 # df_explode.show(5, truncate=False)
 
-df_explode.write.mode('overwrite').csv(docker_write_path, header=True)
+
+# TODO bring this back 
+
+joined_df.write.mode('overwrite').csv(docker_write_path, header=True)
 
 
 spark.stop()
