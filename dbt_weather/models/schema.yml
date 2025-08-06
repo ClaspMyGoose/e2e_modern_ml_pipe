@@ -1,0 +1,33 @@
+models:
+  - name: daily_weather_facts
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - name
+            - weather_date
+            - state
+    columns:
+      - name: weather_severity_index
+        tests:
+          - not_null
+
+
+  - name: monthly_weather_facts
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - pe_date
+            - name
+            - state
+    columns:
+      - name: weather_severity_index
+        tests:
+          - not_null
+
+  - name: stg_weather_data
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - name
+            - weather_date
+            - state

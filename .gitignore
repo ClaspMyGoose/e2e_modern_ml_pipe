@@ -223,5 +223,8 @@ dbt_project.yml.sig
 profiles.yml
 *.log
 .DS_Store # macOS specific
+*.DS_store
+/db/
 
 
+# /data/

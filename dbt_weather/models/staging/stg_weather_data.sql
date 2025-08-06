@@ -1,5 +1,11 @@
-
-
+{{ config(
+    materialized='table',
+    indexes=[
+        {'columns': ['weather_date'], 'type': 'btree'},
+        {'columns': ['name'], 'type': 'btree'},
+        {'columns': ['state'], 'type': 'bitmap'}
+    ]
+) }}
 
 SELECT 
     name, 
