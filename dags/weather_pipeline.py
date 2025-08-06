@@ -6,7 +6,8 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
 
-extract_mount_path = os.getenv('EXTRACT_MOUNT_PATH')
+extract_mount_path_json = os.getenv('EXTRACT_MOUNT_PATH_JSON')
+extract_mount_path_csv = os.getenv('EXTRACT_MOUNT_PATH_CSV')
 process_mount_path = os.getenv('PROCESS_MOUNT_PATH')
 
 
@@ -40,7 +41,9 @@ process_weather = DockerOperator(
     image='spark_python_image',
     mount_tmp_dir=False,
     mounts=[
-        Mount(source=extract_mount_path, target='/app/data', type='bind'),
+        Mount(source=extract_mount_path_json, target='/app/data/json/', type='bind'),
+        # ! added this mount for CSV
+        Mount(source=extract_mount_path_csv, target='/app/data/csv/', type='bind'),
         Mount(source=process_mount_path, target='/app/processed_data/', type='bind')
     ],
     dag=dag

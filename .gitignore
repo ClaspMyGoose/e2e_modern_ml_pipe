@@ -211,3 +211,17 @@ __marimo__/
 /logs
 /plugins
 project_schedule.txt
+
+
+# DBT 
+
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+dbt_project.yml.sig
+profiles.yml
+*.log
+.DS_Store # macOS specific
+
+

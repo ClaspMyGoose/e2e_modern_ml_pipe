@@ -15,7 +15,7 @@ spark = SparkSession.builder \
 # ! because we're running this script in a separate spark container, I have mounts specified in the DAG that map our host input and output folders 
 # ! to the respective input and output folders in the spark container. Here we use the spark containers path 
 docker_json_read_path = '/app/data/json/*.json'
-docker_csv_read_path = 'app/data/csv/*.csv'
+docker_csv_read_path = '/app/data/csv/*.csv'
 docker_write_path = '/app/processed_data/weather_output'
 
 
