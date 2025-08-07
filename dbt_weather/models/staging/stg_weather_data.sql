@@ -20,4 +20,4 @@ SELECT
     CAST(avghumidity as INT) as avg_day_humidity,
     CAST(population as INT) as city_population 
 
-from read_csv_auto('../processed_data/weather_output/part-*.csv', header=true)
+from read_csv_auto('/app/processed_data/weather_output/part-*.csv', header=true)
