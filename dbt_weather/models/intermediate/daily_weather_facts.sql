@@ -1,12 +1,13 @@
 {{ config(
-    materialized='table',
+    materialized='incremental',
+    unique_key=['weather_date','name', 'state'],
+    merge_update_columns=['max_day_temp_fahr','min_day_temp_fahr','fahr_temp_range','max_day_wind_mph','total_day_precip_inches','avg_day_humidity','weather_severity_index'],
     indexes=[
         {'columns': ['weather_date'], 'type': 'btree'},
         {'columns': ['name'], 'type': 'btree'},
         {'columns': ['state'], 'type': 'bitmap'},
     ]
 ) }}
-
 
 
 
@@ -56,3 +57,10 @@ SELECT
 
 
 FROM {{ ref('stg_weather_data') }}
+
+{% if is_incremental() %}
+    -- only processes if the table exists (after run 1)
+    WHERE weather_date >= (SELECT MAX(weather_date) - INTERVAL '3 days' FROM {{ this }} )  
+{% endif %}
+
+

@@ -1,13 +1,17 @@
 {{ config(
-    materialized='table',
+    materialized='incremental',
+    unique_key=['run_date', 'name', 'state', 'weather_date'],
     indexes=[
+        {'columns': ['run_date'], 'type': 'btree'},
         {'columns': ['weather_date'], 'type': 'btree'},
         {'columns': ['name'], 'type': 'btree'},
         {'columns': ['state'], 'type': 'bitmap'}
-    ]
+    ], 
+    post_hook="DELETE FROM {{ this }} WHERE run_date < (current_date - INTERVAL '30 days')"
 ) }}
 
-SELECT 
+SELECT
+    current_date as run_date, 
     name, 
     state, 
     CAST(lat as DOUBLE) as latitude,
@@ -21,3 +25,6 @@ SELECT
     CAST(population as INT) as city_population 
 
 from read_csv_auto('/app/processed_data/weather_output/part-*.csv', header=true)
+
+
+

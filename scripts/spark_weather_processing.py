@@ -1,11 +1,12 @@
 
 import os 
-
+import shutil 
 # was causing the container to not be able to find JAVA :) 
 # os.environ['JAVA_HOME'] = '/opt/homebrew/opt/openjdk@11'
 os.environ['PYSPARK_PYTHON'] = 'python'
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr
+
 
 spark = SparkSession.builder \
     .appName("Weather Data Processing") \
@@ -112,9 +113,12 @@ joined_df = weather_df.repartition('state').join(
 # df_explode.show(5, truncate=False)
 
 
-# TODO bring this back 
 
 joined_df.write.mode('overwrite').csv(docker_write_path, header=True)
+
+
+# clear out daily json files 
+shutil.rmtree('/app/data/json/*')
 
 
 spark.stop()

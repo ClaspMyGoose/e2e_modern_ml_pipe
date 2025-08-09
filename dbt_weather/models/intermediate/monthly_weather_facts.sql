@@ -1,13 +1,13 @@
 {{ config(
-    materialized='table',
+    materialized='incremental',
+    unique_key=['pe_date', 'name', 'state'],
+    merge_update_columns=['max_month_temp_fahr','min_month_temp_fahr','avg_max_month_temp_fahr','avg_min_month_temp_fahr',  'avg_month_fahr_temp_range','max_max_month_wind','min_max_month_wind','avg_month_precipitation','avg_month_humidity','max_month_severity_index','min_month_severity_index','avg_month_severity_index','day_cnt'],
     indexes=[
         {'columns': ['pe_date'], 'type': 'btree'},
         {'columns': ['name'], 'type': 'btree'},
         {'columns': ['state'], 'type': 'bitmap'}
     ]
 ) }}
-
-
 
 
 select 
@@ -42,6 +42,9 @@ select
 from {{ ref('daily_weather_facts') }}
 
 
+where weather_date > DATE_TRUNC('month', current_date) - INTERVAL '1 month'
+
+
 group by 
     name, 
     state, 
@@ -56,13 +59,9 @@ group by
     last_day(weather_date)
 
 
+having count(*) > 28 
 
 
-{{ config(
-    materialized='table',
-    indexes=[
-        {'columns': ['weather_date'], 'type': 'btree'},
-        {'columns': ['name'], 'type': 'btree'},
-        {'columns': ['state'], 'type': 'btree'}
-    ]
-) }}
+
+-- we're going to do incremental here 
+
