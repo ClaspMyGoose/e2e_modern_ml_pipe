@@ -1,26 +1,26 @@
 
 import os 
 import shutil 
+from dotenv import load_dotenv
 # was causing the container to not be able to find JAVA :) 
 # os.environ['JAVA_HOME'] = '/opt/homebrew/opt/openjdk@11'
 os.environ['PYSPARK_PYTHON'] = 'python'
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr
 
+load_dotenv()
 spark = SparkSession.builder \
     .appName("Weather Data Processing") \
     .getOrCreate()
 
 
-# ! because we're running this script in a separate spark container, I have mounts specified in the DAG that map our host input and output folders 
-# ! to the respective input and output folders in the spark container. Here we use the spark containers path 
-docker_json_read_path = '/app/data/json/*.json'
-docker_csv_read_path = '/app/data/csv/*.csv'
-docker_write_path = '/app/processed_data/weather_output'
-docker_json_folder = '/app/data/json'
+json_read_path = os.getenv('EXTRACT_MOUNT_PATH_JSON')
+csv_read_path = os.getenv('EXTRACT_MOUNT_PATH_CSV')
+write_path = os.getenv('PROCESS_OUTPUT_MOUNT_PATH')
 
 
-dirty_weather_df = spark.read.json(docker_json_read_path)
+
+dirty_weather_df = spark.read.json(json_read_path)
 
 
 weather_df = dirty_weather_df.select(
@@ -49,7 +49,7 @@ weather_df = dirty_weather_df.select(
     col('daily_data.avghumidity').alias('avghumidity')
 )
 
-dirty_city_pop_df = spark.read.csv(docker_csv_read_path, header=False)
+dirty_city_pop_df = spark.read.csv(csv_read_path, header=False)
 
 intermediate_city_pop_df = dirty_city_pop_df.select(
     '_c1', # combined city and state 
@@ -112,17 +112,14 @@ joined_df = weather_df.repartition('state').join(
 
 
 
-joined_df.write.mode('overwrite').csv(docker_write_path, header=True)
+joined_df.write.mode('overwrite').csv(write_path, header=True)
 
 
-print(os.listdir(docker_json_folder))
-
-
-# clear out daily json files 
-for file in os.listdir(docker_json_folder):
-    filepath = os.path.join(docker_json_folder, file)
+for file in os.listdir(json_read_path):
+    filepath = os.path.join(json_read_path, file)
     if os.path.isfile(filepath) and file[-5:] == '.json':
         os.remove(filepath)
+# shutil.rmtree(f'{json_read_path}*')
 
 
 spark.stop()

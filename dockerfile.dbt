@@ -32,7 +32,6 @@ RUN python -m pip install --no-cache-dir \
     dbt-duckdb 
 
 HEALTHCHECK CMD dbt --version || exit 1
-ENTRYPOINT ["dbt"]
 
 # Create profiles.yml that references runtime env vars
 RUN mkdir -p /root/.dbt && \
@@ -42,4 +41,5 @@ RUN mkdir -p /root/.dbt && \
     echo "      type: duckdb" >> /root/.dbt/profiles.yml && \
     echo "      path: \"{{ env_var('DUCKDB_PATH') }}\"" >> /root/.dbt/profiles.yml && \
     echo "  target: dev" >> /root/.dbt/profiles.yml
+
 

@@ -4,26 +4,19 @@ import os
 import sys
 from datetime import date, timedelta
 import pandas as pd 
+from dotenv import load_dotenv
 
 # no need for this, runs in a container 
-# loadENV = load_dotenv()
+loadENV = load_dotenv()
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
+DESTINATION = os.getenv('EXTRACT_MOUNT_PATH_JSON')
+
 
 if not WEATHER_API_KEY:
     print('Could not load ENV file. Exiting...')
     sys.exit(1) 
 
-
-
-
-# ! because of python versioning in docker container, we 
-# ! to use f' {""} ' pattern within f strings. 
-
-
-today = date.today()
-today_minus_1 = date.today() - timedelta(days=1)
-today_minus_30 = date.today() - timedelta(days=7)
-
+counter = 0 
 
 us_cities = [
     {"name": "Montgomery", "lat": 32.3667, "lon": -86.3},
@@ -78,34 +71,57 @@ us_cities = [
     {"name": "Pierre", "lat": 44.3683, "lon": -100.3510}
 ]
 
-# for pandas prototyping 
-# dataframeObj = {
-#     'city_name': [],
-#     'region': [],
-#     'lat': [],
-#     'lon': [],
-#     'date_str': [], 
-#     'maxtemp_f': [],
-#     'mintemp_f': [],
-#     'maxwind_mph': [],
-#     'totalprecip_in': [],
-#     'avghumidity': []
-# }
 
+
+final_end_date = date(2025,7,9)
+
+start_range = date(2024,8,9)
+end_range = start_range + timedelta(days=30)
+
+while end_range < final_end_date:
+    counter += 1
+    for city in us_cities:
+        print(f'Running: {city} for range: {start_range}-{end_range}')
+        try:
+            weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city["lat"]},{city["lon"]}&dt={start_range}&end_dt={end_range}'
+            response = requests.get(weather_url)
+            json = response.text
+
+            with open(f'{DESTINATION}{counter}_{city["name"]}.json', 'w') as f:
+                f.write(json)
+
+                
+
+        except Exception as e: 
+            print('Error with fetching data, please try again')
+            print(e)
+            sys.exit(1)
+
+    # do work in here 
+
+    # increment our ranges for each call 
+    start_range = end_range + timedelta(days=1)
+    end_range = start_range + timedelta(days=30)
+
+
+counter += 1 
 
 for city in us_cities:
     
+    print(f'Running: {city} for range: {start_range}-{final_end_date}')
     try:
-        weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city["lat"]},{city["lon"]}&dt={today_minus_30}&end_dt={today_minus_1}'
+        weather_url = f'https://api.weatherapi.com/v1/history.json?key={WEATHER_API_KEY}&q={city["lat"]},{city["lon"]}&dt={start_range}&end_dt={final_end_date}'
         response = requests.get(weather_url)
         json = response.text
 
-        with open(f'/opt/airflow/data/json/{today}_{city["name"]}.json', 'w') as f:
+        with open(f'{DESTINATION}{counter}_{city["name"]}.json', 'w') as f:
             f.write(json)
 
-            
+                
 
     except Exception as e: 
         print('Error with fetching data, please try again')
         print(e)
         sys.exit(1)
+
+
