@@ -63,7 +63,7 @@ us_cities = [
     {"name": "Columbia", "lat": 34.0006, "lon": -81.035},
     {"name": "Nashville", "lat": 36.1658, "lon": -86.7844},
     {"name": "Austin", "lat": 30.2669, "lon": -97.7428},
-    {"name": "Salt Lake City", "lat": 40.7608, "lon": -111.8903},
+    {"name": "Salt Lake City", "lat": 40.7606, "lon": -111.8881},
     {"name": "Montpelier", "lat": 44.26, "lon": -72.5758},
     {"name": "Richmond", "lat": 37.5536, "lon": -77.4606},
     {"name": "Olympia", "lat": 47.0381, "lon": -122.8994},

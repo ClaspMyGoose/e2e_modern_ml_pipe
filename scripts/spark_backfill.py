@@ -5,15 +5,16 @@ from dotenv import load_dotenv
 # was causing the container to not be able to find JAVA :) 
 # os.environ['JAVA_HOME'] = '/opt/homebrew/opt/openjdk@11'
 os.environ['PYSPARK_PYTHON'] = 'python'
+import sys 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr
+from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr, count_distinct
 
-load_dotenv()
+
 spark = SparkSession.builder \
     .appName("Weather Data Processing") \
     .getOrCreate()
 
-
+load_dotenv()
 json_read_path = os.getenv('EXTRACT_MOUNT_PATH_JSON')
 csv_read_path = os.getenv('EXTRACT_MOUNT_PATH_CSV')
 write_path = os.getenv('PROCESS_OUTPUT_MOUNT_PATH')
@@ -105,6 +106,11 @@ joined_df = weather_df.repartition('state').join(
 # joined_df.show(5, truncate=False)
 
 
+countOfUniqueCities = joined_df.select(count_distinct('name')).collect()[0][0]
+
+if countOfUniqueCities != 50:
+    print(f'Expected 50, got: {countOfUniqueCities}')
+    sys.exit(1)
 
 
 # df_explode.printSchema()  # See the structure
@@ -115,11 +121,11 @@ joined_df = weather_df.repartition('state').join(
 joined_df.write.mode('overwrite').csv(write_path, header=True)
 
 
-for file in os.listdir(json_read_path):
-    filepath = os.path.join(json_read_path, file)
-    if os.path.isfile(filepath) and file[-5:] == '.json':
-        os.remove(filepath)
-# shutil.rmtree(f'{json_read_path}*')
+# for file in os.listdir(json_read_path):
+#     filepath = os.path.join(json_read_path, file)
+#     if os.path.isfile(filepath) and file[-5:] == '.json':
+#         os.remove(filepath)
+# # shutil.rmtree(f'{json_read_path}*')
 
 
 spark.stop()

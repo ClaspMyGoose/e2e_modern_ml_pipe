@@ -1,11 +1,13 @@
 
 import os 
 import shutil 
+import sys 
+from glob import glob
 # was causing the container to not be able to find JAVA :) 
 # os.environ['JAVA_HOME'] = '/opt/homebrew/opt/openjdk@11'
 os.environ['PYSPARK_PYTHON'] = 'python'
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr
+from pyspark.sql.functions import explode, col, arrays_zip, split, regexp_replace, trim, expr, count_distinct
 
 spark = SparkSession.builder \
     .appName("Weather Data Processing") \
@@ -104,8 +106,11 @@ joined_df = weather_df.repartition('state').join(
 # joined_df.printSchema()
 # joined_df.show(5, truncate=False)
 
+countOfUniqueCities = joined_df.select(count_distinct('name')).collect()[0][0]
 
-
+if countOfUniqueCities != 50:
+    print(f'Expected 50 Cities, got {countOfUniqueCities}')
+    sys.exit(1)
 
 # df_explode.printSchema()  # See the structure
 # df_explode.show(5, truncate=False)
@@ -115,14 +120,13 @@ joined_df = weather_df.repartition('state').join(
 joined_df.write.mode('overwrite').csv(docker_write_path, header=True)
 
 
-print(os.listdir(docker_json_folder))
 
 
 # clear out daily json files 
-for file in os.listdir(docker_json_folder):
-    filepath = os.path.join(docker_json_folder, file)
-    if os.path.isfile(filepath) and file[-5:] == '.json':
-        os.remove(filepath)
+files_to_delete = glob('/app/data/json/*.json')
+for file in files_to_delete:
+    print(f"Deleting: {file}")
+    os.remove(file)
 
 
 spark.stop()

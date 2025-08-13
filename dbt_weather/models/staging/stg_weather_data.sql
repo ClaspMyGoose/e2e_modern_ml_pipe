@@ -1,6 +1,7 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='delete+insert',
+    incremental_strategy='append',
+    pre_hook='{{ delete_duplicate_run_if_exists() }}',
     unique_key=['run_date', 'name', 'state', 'weather_date'],
     indexes=[
         {'columns': ['run_date'], 'type': 'btree'},
